@@ -17,7 +17,13 @@ make unit_lru_pool
 Бенчмарк:  
 ```sh  
 make bench_lru_pool
-```  
+```
+
+Рейс детектор:
+```sh  
+make race 
+```
+
 Дополнительные команды можно найти в ```Makefile```.
 ____
 
