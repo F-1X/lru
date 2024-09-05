@@ -22,6 +22,9 @@ bench_lru_int_pool:
 bench_lru_pool:
 	go test -bench=. ./lru_pool -run=^$
 
+# детектор гонок
+race:
+	go test -v -race ./...
 
 # pprof of BenchmarkRandomAddAndGet in lru_pool
 bench_pprof:

@@ -1,7 +1,6 @@
 package lru_pool
 
 import (
-	"fmt"
 	"testing"
 	"time"
 )
@@ -204,16 +203,16 @@ func TestCacheWithTTLAndNoTTL(t *testing.T) {
 	}
 }
 
-func printCacheState(c *Cache) {
-	fmt.Println("Cache items:")
-	for k, v := range c.items {
-		fmt.Printf("Key: %v, Value: %v, Expiration: %v\n", k, v.Value, v.Expiration)
-	}
-	fmt.Println("Cache list order:")
-	node := c.list.Head
-	for node != nil {
-		fmt.Printf("Key: %v, Value: %v\n", node.Key, node.Value)
-		node = node.Next
-	}
-	fmt.Println("--------")
-}
+// func printCacheState(c *Cache) {
+// 	fmt.Println("Cache items:")
+// 	for k, v := range c.items {
+// 		fmt.Printf("Key: %v, Value: %v, Expiration: %v\n", k, v.Value, v.Expiration)
+// 	}
+// 	fmt.Println("Cache list order:")
+// 	node := c.list.Head
+// 	for node != nil {
+// 		fmt.Printf("Key: %v, Value: %v\n", node.Key, node.Value)
+// 		node = node.Next
+// 	}
+// 	fmt.Println("--------")
+// }
