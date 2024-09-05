@@ -1,4 +1,4 @@
-package lru
+package lru_int_pool
 
 import (
 	"sync"
@@ -6,8 +6,8 @@ import (
 )
 
 type Node struct {
-	Key        any
-	Value      any
+	Key        int
+	Value      int
 	Expiration time.Time
 	Prev       *Node
 	Next       *Node
@@ -17,14 +17,37 @@ type List struct {
 	Head *Node
 	Tail *Node
 	Size int
+	pool *sync.Pool
 }
 
 func NewList() *List {
-	return &List{}
+	return &List{
+		pool: &sync.Pool{
+			New: func() any {
+				return &Node{}
+			},
+		},
+	}
 }
 
-func (l *List) PushFront(key any, value any, expiration time.Time) *Node {
-	node := &Node{Key: key, Value: value, Expiration: expiration}
+func (l *List) GetNode() *Node {
+	return l.pool.Get().(*Node)
+}
+
+func (l *List) PutNode(node *Node) {
+	node.Key = 0
+	node.Value = 0
+	node.Expiration = time.Time{}
+	node.Prev = nil
+	node.Next = nil
+	l.pool.Put(node)
+}
+
+func (l *List) PushFront(key int, value int, expiration time.Time) *Node {
+	node := l.GetNode()
+	node.Key = key
+	node.Value = value
+	node.Expiration = expiration
 
 	if l.Head == nil {
 		l.Head = node
@@ -64,11 +87,12 @@ func (l *List) Remove(node *Node) {
 	node.Next = nil
 
 	l.Size--
+	l.PutNode(node)
 }
 
 type Cache struct {
 	capacity int
-	items    map[any]*Node
+	items    map[int]*Node
 	list     *List
 	mu       *sync.Mutex
 }
@@ -76,40 +100,40 @@ type Cache struct {
 func NewCache(capacity int) *Cache {
 	return &Cache{
 		capacity: capacity,
-		items:    make(map[any]*Node, capacity),
+		items:    make(map[int]*Node),
 		list:     NewList(),
 		mu:       &sync.Mutex{},
 	}
 }
 
-func (c *Cache) Get(key any) (any, bool) {
+func (c *Cache) Get(key int) (int, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	node, ok := c.items[key]
 	if !ok {
-		return nil, false
+		return 0, false
 	}
 
 	if time.Now().After(node.Expiration) {
 		c.remove(node)
-		return nil, false
+		return 0, false
 	}
 
-	c.list.Remove(node)
-	node = c.list.PushFront(key, node.Value, node.Expiration)
-	c.items[key] = node
+	value := node.Value
+	expiration := node.Expiration
 
+	c.list.Remove(node)
+	node = c.list.PushFront(key, value, expiration)
+	c.items[key] = node
 	return node.Value, true
 }
 
-var InfinityTime = time.Hour
-
-func (c *Cache) Add(key any, value any) {
-	c.AddWithTTL(key, value, InfinityTime)
+func (c *Cache) Add(key int, value int) {
+	c.AddWithTTL(key, value, time.Hour*24)
 }
 
-func (c *Cache) AddWithTTL(key any, value any, ttl time.Duration) {
+func (c *Cache) AddWithTTL(key int, value int, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -122,7 +146,7 @@ func (c *Cache) AddWithTTL(key any, value any, ttl time.Duration) {
 		return
 	}
 
-	if c.list.Size >= c.capacity {
+	if c.list.Size == c.capacity {
 		c.remove(c.list.Tail)
 	}
 
@@ -151,6 +175,6 @@ func (c *Cache) Cap() int {
 func (c *Cache) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.items = make(map[any]*Node)
+	c.items = make(map[int]*Node)
 	c.list = NewList()
 }

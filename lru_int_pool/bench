@@ -1,0 +1,5 @@
+BenchmarkAdd-12                  	13122871	        90.61 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAddAndGet/Adding-12     	12766622	        90.76 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAddAndGet/Getting-12    	60522918	        19.80 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRandomAddAndGet-12      	 9158634	       132.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLRU_Rand_NoExpire-12    	 8983488	       133.6 ns/op	       0 B/op	       0 allocs/op

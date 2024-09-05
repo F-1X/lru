@@ -1,4 +1,4 @@
-package lru
+package lru_int_pool
 
 import (
 	"fmt"
@@ -27,32 +27,32 @@ func TestLenProtected(t *testing.T) {
 func TestCacheEviction(t *testing.T) {
 	cache := NewCache(2)
 
-	cache.Add("key1", "value1")
-	cache.Add("key2", "value2")
+	cache.Add(1, 1)
+	cache.Add(2, 2)
 	if cache.Len() != 2 {
 		t.Fatalf("Expected length 2, got %d", cache.Len())
 	}
 
-	cache.Add("key3", "value3")
+	cache.Add(3, 3)
 	if cache.Len() != 2 {
 		t.Fatalf("Expected length 2, got %d", cache.Len())
 	}
 
-	if _, ok := cache.Get("key1"); ok {
+	if _, ok := cache.Get(1); ok {
 		t.Fatalf("Expected key1 to be evicted")
 	}
 	if cache.Len() != 2 {
 		t.Fatalf("Expected length 2, got %d", cache.Len())
 	}
 
-	if _, ok := cache.Get("key2"); !ok {
+	if _, ok := cache.Get(2); !ok {
 		t.Fatalf("Expected key2 to be present")
 	}
 	if cache.Len() != 2 {
 		t.Fatalf("Expected length 2, got %d", cache.Len())
 	}
 
-	if v, ok := cache.Get("key2"); !ok {
+	if v, ok := cache.Get(2); !ok {
 		t.Fatalf("Expected key2 to be present %v", v)
 	}
 
@@ -60,14 +60,14 @@ func TestCacheEviction(t *testing.T) {
 		t.Fatalf("Expected length 2, got %d", cache.Len())
 	}
 
-	if _, ok := cache.Get("key2"); !ok {
+	if _, ok := cache.Get(2); !ok {
 		t.Fatalf("Expected key2 to be present")
 	}
 	if cache.Len() != 2 {
 		t.Fatalf("Expected length 2, got %d", cache.Len())
 	}
 
-	if _, ok := cache.Get("key3"); !ok {
+	if _, ok := cache.Get(3); !ok {
 		t.Fatalf("Expected key3 to be present")
 	}
 	if cache.Len() != 2 {
@@ -78,47 +78,47 @@ func TestCacheEviction(t *testing.T) {
 func TestCache(t *testing.T) {
 	c := NewCache(3)
 
-	c.Add("key1", "value1")
-	c.Add("key2", "value2")
-	c.Add("key3", "value3")
+	c.Add(1, 1)
+	c.Add(2, 2)
+	c.Add(3, 3)
 
 	// printCacheState(c)
 
-	if v, ok := c.Get("key1"); !ok || v != "value1" {
+	if v, ok := c.Get(1); !ok || v != 1 {
 		t.Fatalf("Expected value1, got %v", v)
 	}
-	if v, ok := c.Get("key2"); !ok || v != "value2" {
+	if v, ok := c.Get(2); !ok || v != 2 {
 		t.Fatalf("Expected value2, got %v", v)
 	}
-	if v, ok := c.Get("key3"); !ok || v != "value3" {
+	if v, ok := c.Get(3); !ok || v != 3 {
 		t.Fatalf("Expected value3, got %v", v)
 	}
 
-	c.Add("key4", "value4")
+	c.Add(4, 4)
 
-	if v, ok := c.Get("key1"); ok {
+	if v, ok := c.Get(1); ok {
 		t.Fatalf("Expected key1 to be evicted, but got %v", v)
 	}
 
-	if v, ok := c.Get("key2"); !ok || v != "value2" {
+	if v, ok := c.Get(2); !ok || v != 2 {
 		t.Fatalf("Expected value2, got %v", v)
 	}
-	if v, ok := c.Get("key3"); !ok || v != "value3" {
+	if v, ok := c.Get(3); !ok || v != 3 {
 		t.Fatalf("Expected value3, got %v", v)
 	}
-	if v, ok := c.Get("key4"); !ok || v != "value4" {
+	if v, ok := c.Get(4); !ok || v != 4 {
 		t.Fatalf("Expected value4, got %v", v)
 	}
 
-	c.Add("key2", "new_value2")
-	if v, ok := c.Get("key2"); !ok || v != "new_value2" {
+	c.Add(2, 123)
+	if v, ok := c.Get(2); !ok || v != 123 {
 		t.Fatalf("Expected new_value2, got %v", v)
 	}
 
-	c.AddWithTTL("key5", "value5", 1*time.Millisecond)
+	c.AddWithTTL(5, 5, 1*time.Millisecond)
 	time.Sleep(2 * time.Millisecond)
 
-	if v, ok := c.Get("key5"); ok {
+	if v, ok := c.Get(5); ok {
 		t.Fatalf("Expected key5 to be evicted, but got %v", v)
 	}
 }
@@ -126,43 +126,43 @@ func TestCache(t *testing.T) {
 func TestCache2(t *testing.T) {
 	cache := NewCache(2)
 
-	cache.Add("key1", "value1")
-	val, ok := cache.Get("key1")
-	if !ok || val != "value1" {
+	cache.Add(1, 1)
+	val, ok := cache.Get(1)
+	if !ok || val != 1 {
 		t.Fatalf("Expected value1, got %v", val)
 	}
 
-	cache.Add("key2", "value2")
-	val, ok = cache.Get("key2")
-	if !ok || val != "value2" {
+	cache.Add(2, 2)
+	val, ok = cache.Get(2)
+	if !ok || val != 2 {
 		t.Fatalf("Expected value2, got %v", val)
 	}
 
-	cache.Add("key3", "value3")
-	val, ok = cache.Get("key1")
+	cache.Add(3, 3)
+	val, ok = cache.Get(1)
 	if ok {
 		t.Fatalf("Expected key1 to be evicted, got %v", val)
 	}
 
-	val, ok = cache.Get("key2")
-	if !ok || val != "value2" {
+	val, ok = cache.Get(2)
+	if !ok || val != 2 {
 		t.Fatalf("Expected value2, got %v", val)
 	}
 
-	val, ok = cache.Get("key3")
-	if !ok || val != "value3" {
+	val, ok = cache.Get(3)
+	if !ok || val != 3 {
 		t.Fatalf("Expected value3, got %v", val)
 	}
 
-	cache.AddWithTTL("key4", "value4", 1*time.Second)
-	val, ok = cache.Get("key4")
-	if !ok || val != "value4" {
+	cache.AddWithTTL(4, 4, 1*time.Second)
+	val, ok = cache.Get(4)
+	if !ok || val != 4 {
 		t.Fatalf("Expected value4, got %v", val)
 	}
 
 	time.Sleep(2 * time.Second)
 
-	val, ok = cache.Get("key4")
+	val, ok = cache.Get(4)
 	if ok {
 		t.Fatalf("Expected key4 to be evicted, got %v", val)
 	}
@@ -171,35 +171,35 @@ func TestCache2(t *testing.T) {
 func TestCacheWithTTLAndNoTTL(t *testing.T) {
 	cache := NewCache(2)
 
-	cache.AddWithTTL("key1", "value1", 2*time.Second)
-	val, ok := cache.Get("key1")
-	if !ok || val != "value1" {
+	cache.AddWithTTL(1, 1, 2*time.Second)
+	val, ok := cache.Get(1)
+	if !ok || val != 1 {
 		t.Fatalf("Expected value1, got %v", val)
 	}
 
 	time.Sleep(1 * time.Second)
 
-	val, ok = cache.Get("key1")
-	if !ok || val != "value1" {
+	val, ok = cache.Get(1)
+	if !ok || val != 1 {
 		t.Fatalf("Expected value1, got %v", val)
 	}
 
 	time.Sleep(2 * time.Second)
 
-	val, ok = cache.Get("key1")
+	val, ok = cache.Get(1)
 	if ok {
 		t.Fatalf("Expected key1 to be evicted, got %v", val)
 	}
 
-	cache.Add("key2", "value2")
-	val, ok = cache.Get("key2")
-	if !ok || val != "value2" {
+	cache.Add(2, 2)
+	val, ok = cache.Get(2)
+	if !ok || val != 2 {
 		t.Fatalf("Expected value2, got %v", val)
 	}
 
-	cache.Add("key3", "value3")
-	val, ok = cache.Get("key2")
-	if !ok || val != "value2" {
+	cache.Add(3, 3)
+	val, ok = cache.Get(2)
+	if !ok || val != 2 {
 		t.Fatalf("Expected value2, got %v", val)
 	}
 }

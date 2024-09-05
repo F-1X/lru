@@ -1,4 +1,4 @@
-package lru_pool
+package lru
 
 import (
 	"crypto/rand"

@@ -1,4 +1,4 @@
-package lru_pool
+package lru_int_pool
 
 import (
 	"crypto/rand"
@@ -36,9 +36,9 @@ func BenchmarkAddAndGet(b *testing.B) {
 func BenchmarkRandomAddAndGet(b *testing.B) {
 	c := NewCache(1000)
 
-	trace := make([]int64, b.N*2)
+	trace := make([]int, b.N*2)
 	for i := 0; i < b.N*2; i++ {
-		trace[i] = getRand(b) % 32768
+		trace[i] = int(getRand(b) % 32768)
 	}
 
 	b.ResetTimer()
@@ -51,9 +51,9 @@ func BenchmarkRandomAddAndGet(b *testing.B) {
 func BenchmarkLRU_Rand_NoExpire(b *testing.B) {
 	l := NewCache(8192)
 
-	trace := make([]int64, b.N*2)
+	trace := make([]int, b.N*2)
 	for i := 0; i < b.N*2; i++ {
-		trace[i] = getRand(b) % 32768
+		trace[i] = int(getRand(b) % 32768)
 	}
 
 	b.ResetTimer()
