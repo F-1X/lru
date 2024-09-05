@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-func TestCacheRaceConditionParallel(t *testing.T) {
-	cache := NewCache(100)
+func TestCacheRaceConditionParallelOnlyOneGet(t *testing.T) {
+	cache := NewCache(1)
 
 	t.Run("Add and Get parallel", func(t *testing.T) {
 		t.Parallel()
@@ -15,48 +15,82 @@ func TestCacheRaceConditionParallel(t *testing.T) {
 
 		for i := 0; i < 100; i++ {
 			wg.Add(1)
-			go func(i int) {
+			go func() {
 				defer wg.Done()
-				key := i
-				value := i * 10
-
-				cache.AddWithTTL(key, value, time.Minute)
-
-				val, ok := cache.Get(key)
-				if !ok {
-					t.Errorf("Key not found: %v", key)
+				_, ok := cache.Get(1)
+				if ok {
+					t.Errorf("Key not found: %v", i)
 				}
+			}()
+		}
+		wg.Wait()
+	})
+}
 
+func TestCacheRaceConditionParallelOnlyOneGetAdd(t *testing.T) {
+	cache := NewCache(1)
+
+	t.Run("Add and Get parallel", func(t *testing.T) {
+		t.Parallel()
+		var wg sync.WaitGroup
+
+		for i := 0; i < 100; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+
+				value := 1
+				cache.AddWithTTL(1, value, time.Minute)
+
+				val, ok := cache.Get(1)
+				if !ok {
+					t.Errorf("Key not found: %v", i)
+				}
 				if val != value {
 					t.Errorf("Expected value: %v, got: %v", value, val)
 				}
-			}(i)
+			}()
 		}
-
 		wg.Wait()
+	})
+}
+
+func TestCacheRaceConditionParallelAddingAndParrallelRemove(t *testing.T) {
+	cache := NewCache(100)
+	t.Run("Add and Get parallel", func(t *testing.T) {
+		t.Parallel()
+
+		var wg sync.WaitGroup
+
+		for i := 0; i < 100; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				value := i * 10
+				cache.AddWithTTL(i, value, time.Minute)
+			}()
+		}
+		wg.Wait()
+
 	})
 
 	t.Run("Remove parallel", func(t *testing.T) {
 		t.Parallel()
+
 		var wg sync.WaitGroup
 
-		for i := 0; i < 50; i++ {
+		for i := 0; i < 100; i++ {
 			wg.Add(1)
+
 			go func() {
 				defer wg.Done()
-				key := i
-				cache.mu.Lock()
-				defer cache.mu.Unlock()
-				if node, ok := cache.items[key]; ok {
-					cache.remove(node)
-				}
+				cache.Remove(i)
 			}()
 		}
-
 		wg.Wait()
-
-		if cache.Len() != 0 {
-			t.Errorf("Len failed")
-		}
 	})
+
+	if cache.Len() != 0 {
+		t.Errorf("Cache size should be 0, but got %d", cache.Len())
+	}
 }

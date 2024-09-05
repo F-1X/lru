@@ -178,3 +178,16 @@ func (c *Cache) Clear() {
 	c.items = make(map[any]*Node)
 	c.list = NewList()
 }
+
+func (c *Cache) Remove(key any) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	node, ok := c.items[key]
+	if !ok || node == nil {
+		return
+	}
+
+	delete(c.items, key)
+	c.list.Remove(node)
+}
