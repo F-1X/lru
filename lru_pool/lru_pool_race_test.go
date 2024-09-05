@@ -76,7 +76,7 @@ func TestCacheRaceConditionParallelAddingAndParrallelRemove(t *testing.T) {
 
 	t.Run("Remove parallel", func(t *testing.T) {
 		t.Parallel()
-
+		// не совсем уверен в корректности удаления в параллельном запуске
 		var wg sync.WaitGroup
 
 		for i := 0; i < 100; i++ {

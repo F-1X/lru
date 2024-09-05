@@ -18,7 +18,6 @@ make unit_lru_pool
 ```sh  
 make bench_lru_pool
 ```
-
 Рейс детектор:
 ```sh  
 make race 
