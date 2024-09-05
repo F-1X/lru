@@ -10,6 +10,8 @@ unit_lru_pool:
 	go test -v ./lru_pool -run=^$
 
 
+run_all_unit: unit_lru unit_lru_int_pool unit_lru_pool
+
 # бенчмарки
 bench_lru:
 	go test -bench=. ./lru -run=^$
